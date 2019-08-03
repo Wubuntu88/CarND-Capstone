@@ -84,6 +84,7 @@ class DBWNode(object):
         while not rospy.is_shutdown():
             # Get predicted throttle, brake, and steering using `twist_controller`
             if not None in (self.current_velocity, self.linear_velocity, self.angular_velocity):
+                rospy.loginfo("target_velocity: %s", str(self.linear_velocity))
                 self.throttle, self.brake, self.steering = \
                     self.controller.control(current_vel=self.current_velocity,
                                             dbw_enabled=self.dbw_enabled,
@@ -98,7 +99,8 @@ class DBWNode(object):
         self.dbw_enabled = message
 
     def twist_callback(self, message):
-        self.linear_velocity = message.twist.linear.x
+        self.linear_velocity = 6.0 if message.twist.linear.x > 6.0 else message.twist.linear.x
+        # self.linear_velocity = message.twist.linear.x
         self.angular_velocity = message.twist.angular.z
 
     def velocity_callback(self, message):
