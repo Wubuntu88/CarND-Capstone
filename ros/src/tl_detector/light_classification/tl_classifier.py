@@ -1,8 +1,8 @@
-from styx_msgs.msg import TrafficLight
 import cv2
 import numpy as np
 import time
 import rospy
+from styx_msgs.msg import TrafficLight
 
 class TLClassifier(object):
     # Hue scale: https://colorlitelens.com/color-games.htmll
@@ -25,36 +25,32 @@ class TLClassifier(object):
         self.GREEN_MIN_THRESHOLD = np.array([GREEN_MIN_AS_HUE, 100, 100], np.uint8)
         self.GREEN_MAX_THRESHOLD = np.array([GREEN_MAX_AS_HUE, 255, 255], np.uint8)
         
-        self.PIXEL_COUNT_THRESHOLD = 40
+        self.PIXEL_COUNT_THRESHOLD = 80
 
-    def get_classification(self, image):
-        """Determines the color of the traffic light in the image
-
-        Args:
-            image (cv::Mat): image containing the traffic light
-
-        Returns:
-            int: ID of traffic light color (specified in styx_msgs/TrafficLight)
-
+    def get_classification(self, rgb_image):
+        """ Classifies the image as containing a red, yellow, or green light
+        @param rgb_image (cv::Mat): the image that may have a light in it
+        @return (int): Traffic light color from styx_msgs/TrafficLight
         """
-        start_time = time.time()
-        image_in_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        start_time_seconds = time.time()
+        hsv_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
         
-        red_thresholded_image = cv2.inRange(image_in_hsv, self.RED_MIN_THRESHOLD, self.RED_MAX_THRESHOLD)
+        red_thresholded_image = cv2.inRange(hsv_image, self.RED_MIN_THRESHOLD, self.RED_MAX_THRESHOLD)
         red_pixel_count = cv2.countNonZero(red_thresholded_image)
-        # print("red pixel count: " + str(red_pixel_count))
         if red_pixel_count > self.PIXEL_COUNT_THRESHOLD:
-            rospy.loginfo("FOUND RED: " + str(time.time() - start_time))
+            rospy.loginfo("Detected Red in " + str(time.time() - start_time_seconds) + " seconds")
             return TrafficLight.RED
         
-        yellow_thresholded_image = cv2.inRange(image_in_hsv, self.YELLOW_MIN_THRESHOLD, self.YELLOW_MAX_THRESHOLD)
+        yellow_thresholded_image = cv2.inRange(hsv_image, self.YELLOW_MIN_THRESHOLD, self.YELLOW_MAX_THRESHOLD)
         yellow_pixel_count = cv2.countNonZero(yellow_thresholded_image)
         if yellow_pixel_count > self.PIXEL_COUNT_THRESHOLD:
+            rospy.loginfo("Detected Yellow in " + str(time.time() - start_time_seconds) + " seconds")
             return TrafficLight.YELLOW
         
-        green_thresholded_image = cv2.inRange(image_in_hsv, self.GREEN_MIN_THRESHOLD, self.GREEN_MAX_THRESHOLD)
+        green_thresholded_image = cv2.inRange(hsv_image, self.GREEN_MIN_THRESHOLD, self.GREEN_MAX_THRESHOLD)
         green_pixel_count = cv2.countNonZero(green_thresholded_image)
         if green_pixel_count > self.PIXEL_COUNT_THRESHOLD:
+            rospy.loginfo("Detected Green in " + str(time.time() - start_time_seconds) + " seconds")
             return TrafficLight.GREEN
         
         return TrafficLight.UNKNOWN
